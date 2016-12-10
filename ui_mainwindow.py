@@ -52,6 +52,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.tableView = QtWidgets.QTableView(self.verticalLayoutWidget)
         self.tableView.setObjectName("tableView")
+        self.tableView.horizontalHeader().setSortIndicatorShown(True)
         self.verticalLayout.addWidget(self.tableView)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)

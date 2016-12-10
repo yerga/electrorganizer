@@ -44,6 +44,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #self.addbtn.clicked.connect(self.addbtn_clicked)
         self.tableView.setModel(model)
         self.tableView.clicked.connect(self.findrow)
+        self.tableView.hideColumn(0)
+        self.tableView.setSortingEnabled(True)
+
         self.setWindowTitle("Electrorganizer")
 
     def findrow(self, i):
