@@ -14,6 +14,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtSql import QSqlTableModel
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 from ui_mainwindow import Ui_MainWindow
 from ui_adddialog import Ui_addDialog
 import connectDB
@@ -49,6 +50,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tableView.setSortingEnabled(True)
 
         self.setWindowTitle("Electrorganizer")
+        self.setWindowIcon(QIcon("icon.png"))
 
     def findrow(self, i):
         selectedrow = i.row()
@@ -68,6 +70,7 @@ class AddDialog(QMainWindow, Ui_addDialog):
         super(AddDialog, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Add electronic component")
+        self.setWindowIcon(QIcon("icon.png"))
         self.buttonBox.accepted.connect(self.addcomponent)
         self.buttonBox.rejected.connect(self.destroy)
 
