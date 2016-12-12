@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtSql import QSqlTableModel
 from PyQt5.QtCore import Qt
 from ui_mainwindow import Ui_MainWindow
+from ui_adddialog import Ui_addDialog
 import connectDB
 
 
@@ -41,7 +42,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.actionExit.triggered.connect(self.quit)
-        #self.addbtn.clicked.connect(self.addbtn_clicked)
+        self.addBtn.clicked.connect(self.showAddDialog)
         self.tableView.setModel(model)
         self.tableView.clicked.connect(self.findrow)
         self.tableView.hideColumn(0)
@@ -56,6 +57,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def quit(self):
         app.quit()
 
+    def showAddDialog(self):
+        self.addDialog = AddDialog()
+        self.addDialog.show()
+
+
+
+class AddDialog(QMainWindow, Ui_addDialog):
+    def __init__(self):
+        super(AddDialog, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle("Add electronic component")
+        self.buttonBox.accepted.connect(self.addcomponent)
+        self.buttonBox.rejected.connect(self.destroy)
+
+    def addcomponent(self):
+        print ("adding component")
+        self.destroy()
 
 
 if __name__ == '__main__':
