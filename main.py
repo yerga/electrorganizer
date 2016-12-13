@@ -46,6 +46,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.addBtn.clicked.connect(self.showAddDialog)
         self.tableView.setModel(model)
         self.tableView.clicked.connect(self.findrow)
+        self.removeBtn.clicked.connect(self.removeRow)
         self.tableView.hideColumn(0)
         self.tableView.setSortingEnabled(True)
 
@@ -63,6 +64,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.addDialog = AddDialog()
         self.addDialog.show()
 
+    def removeRow(self):
+        model.removeRow(self.tableView.currentIndex().row())
+        print model.submitAll()
+
 
 
 class AddDialog(QMainWindow, Ui_addDialog):
@@ -76,6 +81,43 @@ class AddDialog(QMainWindow, Ui_addDialog):
 
     def addcomponent(self):
         print ("adding component")
+
+        name = self.nameEdit.text()
+        category = self.catEdit.text()
+        description = self.descEdit.text()
+        amount = int(self.amountEdit.text())
+        manufacturer = self.manEdit.text()
+        manid = self.manidEdit.text()
+        supplier = self.supEdit.text()
+        supid = self.supidEdit.text()
+        price = float(self.priceEdit.text())
+        storage = self.storageEdit.text()
+        link = self.linkEdit.text()
+        datasheet = self.dataEdit.text()
+
+        rowcount = model.rowCount()
+        print ("rowcount: "+str(rowcount))
+
+        newrow = model.insertRows(rowcount, 1)
+        model.setData(model.index(rowcount, 0), rowcount+1)
+        model.setData(model.index(rowcount, 1), name)
+        model.setData(model.index(rowcount, 2), category)
+        model.setData(model.index(rowcount, 3), description)
+        model.setData(model.index(rowcount, 4), amount)
+        model.setData(model.index(rowcount, 5), manufacturer)
+        model.setData(model.index(rowcount, 6), manid)
+        model.setData(model.index(rowcount, 7), supplier)
+        model.setData(model.index(rowcount, 8), supid)
+        model.setData(model.index(rowcount, 9), price)
+        model.setData(model.index(rowcount, 10), storage)
+        model.setData(model.index(rowcount, 11), link)
+        model.setData(model.index(rowcount, 12), datasheet)
+
+        print model.submitAll()
+        # print model.lastError().driverText()
+        # print "\n\n"
+        # print model.lastError().databaseText()
+
         self.destroy()
 
 
@@ -84,9 +126,6 @@ if __name__ == '__main__':
 
     if not connectDB.createDB():
          sys.exit(1)
-
-    #button.clicked.connect(addrow)
-    #btn1.clicked.connect(lambda: model.removeRow(view1.currentIndex().row()))
 
     model = QSqlTableModel()
     selectedrow = -1
