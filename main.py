@@ -9,11 +9,10 @@ Organizer for electronic components written in PyQt5
 author: Daniel Martin-Yerga (dyerga (at) gmail.com)
 """
 
-
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtSql import QSqlTableModel
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSettings
 from PyQt5.QtGui import QIcon
 from ui_mainwindow import Ui_MainWindow
 from ui_adddialog import Ui_addDialog
@@ -38,6 +37,7 @@ def initializeModel(model):
     model.setHeaderData(11, Qt.Horizontal, "Link")
     model.setHeaderData(12, Qt.Horizontal, "Datasheet")
 
+
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, model):
         super(MainWindow, self).__init__()
@@ -49,9 +49,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.removeBtn.clicked.connect(self.removeRow)
         self.tableView.hideColumn(0)
         self.tableView.setSortingEnabled(True)
-
         self.setWindowTitle("Electrorganizer")
         self.setWindowIcon(QIcon("icon.png"))
+
+        self.settings = QSettings("yerga", "Electrorganizer")
+        self.categories = self.loadSettings()
+        print ("categories-load: ", self.categories)
+        if not self.categories:
+            self.categories = ['All']
+        print ("categories-not: ", self.categories)
+
+        self.categoryBox.addItems(self.categories)
+        self.categoryBox.currentIndexChanged.connect(self.filterByCat)
 
     def findrow(self, i):
         selectedrow = i.row()
@@ -61,18 +70,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         app.quit()
 
     def showAddDialog(self):
-        self.addDialog = AddDialog()
+        self.addDialog = AddDialog(self)
         self.addDialog.show()
 
     def removeRow(self):
         model.removeRow(self.tableView.currentIndex().row())
         print model.submitAll()
 
+    def loadSettings(self):
+        cats = self.settings.value("categories", None)
+        print cats
+        return cats
+
+    def writeSettings(self):
+        self.settings.setValue("categories", self.categories)
+
+    def updateCategoryBox(self, category):
+        self.categoryBox.addItem(category)
+
+    def filterByCat(self):
+        catselected = self.categoryBox.currentText()
+        if catselected == "All":
+            model.setFilter("")
+            model.select()
+        else:
+            #print ("catsleected: ", catselected)
+            model.setFilter("category = '%s'" % catselected)
+            model.select()
 
 
 class AddDialog(QMainWindow, Ui_addDialog):
-    def __init__(self):
+    def __init__(self, mainwindow):
         super(AddDialog, self).__init__()
+        self.mainwindow = mainwindow
         self.setupUi(self)
         self.setWindowTitle("Add electronic component")
         self.setWindowIcon(QIcon("icon.png"))
@@ -85,12 +115,20 @@ class AddDialog(QMainWindow, Ui_addDialog):
         name = self.nameEdit.text()
         category = self.catEdit.text()
         description = self.descEdit.text()
-        amount = int(self.amountEdit.text())
+        amounttext = self.amountEdit.text()
+        if amounttext:
+            amount = int(amounttext)
+        else:
+            amount = 0
         manufacturer = self.manEdit.text()
         manid = self.manidEdit.text()
         supplier = self.supEdit.text()
         supid = self.supidEdit.text()
-        price = float(self.priceEdit.text())
+        pricetext = self.priceEdit.text()
+        if pricetext:
+            price = int(pricetext)
+        else:
+            price = 0
         storage = self.storageEdit.text()
         link = self.linkEdit.text()
         datasheet = self.dataEdit.text()
@@ -98,10 +136,19 @@ class AddDialog(QMainWindow, Ui_addDialog):
         rowcount = model.rowCount()
         print ("rowcount: "+str(rowcount))
 
-        newrow = model.insertRows(rowcount, 1)
-        model.setData(model.index(rowcount, 0), rowcount+1)
+        model.insertRows(rowcount, 1)
+
+        ids = []
+        for i in range(0, rowcount):
+            ids += [int(model.data(model.index(i, 0)))]
+
+        model.setData(model.index(rowcount, 0), max(ids)+1)
         model.setData(model.index(rowcount, 1), name)
         model.setData(model.index(rowcount, 2), category)
+
+        print ("categ: ", self.mainwindow.categories)
+        self.mainwindow.categories += [category]
+        print ("2categ: ", self.mainwindow.categories)
         model.setData(model.index(rowcount, 3), description)
         model.setData(model.index(rowcount, 4), amount)
         model.setData(model.index(rowcount, 5), manufacturer)
@@ -113,10 +160,14 @@ class AddDialog(QMainWindow, Ui_addDialog):
         model.setData(model.index(rowcount, 11), link)
         model.setData(model.index(rowcount, 12), datasheet)
 
-        print model.submitAll()
-        # print model.lastError().driverText()
-        # print "\n\n"
-        # print model.lastError().databaseText()
+        if model.submitAll():
+            print "data correctly added to database"
+            self.mainwindow.writeSettings()
+            self.mainwindow.updateCategoryBox(category)
+        else:
+            print "error adding data to database"
+            print model.lastError().driverText()
+            print model.lastError().databaseText()
 
         self.destroy()
 
@@ -134,4 +185,3 @@ if __name__ == '__main__':
     window = MainWindow(model)
     window.show()
     sys.exit(app.exec_())
-
