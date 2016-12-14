@@ -13,9 +13,10 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtSql import QSqlTableModel
 from PyQt5.QtCore import Qt, QSettings
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
 from ui_mainwindow import Ui_MainWindow
 from ui_adddialog import Ui_addDialog
+from ui_categorymanager import Ui_CategoryManager
 import connectDB
 
 
@@ -43,6 +44,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.actionExit.triggered.connect(self.quit)
+        self.actionEdit_Categories.triggered.connect(self.showCategoryManager)
         self.addBtn.clicked.connect(self.showAddDialog)
         self.tableView.setModel(model)
         self.tableView.clicked.connect(self.findrow)
@@ -54,12 +56,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.settings = QSettings("yerga", "Electrorganizer")
         self.categories = self.loadSettings()
+        # self.categories = ['All']
+        # self.writeSettings()
         print ("categories-load: ", self.categories)
         if not self.categories:
             self.categories = ['All']
         print ("categories-not: ", self.categories)
 
         self.categoryBox.addItems(self.categories)
+        self.categoryBox.setCurrentIndex(0)
         self.categoryBox.currentIndexChanged.connect(self.filterByCat)
 
     def findrow(self, i):
@@ -86,7 +91,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings.setValue("categories", self.categories)
 
     def updateCategoryBox(self, category):
-        self.categoryBox.addItem(category)
+        #print ("update: ", self.categoryBox.findText(category))
+        if self.categoryBox.findText(category) == -1:
+            self.categoryBox.addItem(category)
 
     def filterByCat(self):
         catselected = self.categoryBox.currentText()
@@ -97,6 +104,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             #print ("catsleected: ", catselected)
             model.setFilter("category = '%s'" % catselected)
             model.select()
+
+    def showCategoryManager(self):
+        self.categoryManager = CategoryManager(self)
+        self.categoryManager.show()
 
 
 class AddDialog(QMainWindow, Ui_addDialog):
@@ -147,7 +158,8 @@ class AddDialog(QMainWindow, Ui_addDialog):
         model.setData(model.index(rowcount, 2), category)
 
         print ("categ: ", self.mainwindow.categories)
-        self.mainwindow.categories += [category]
+        if category not in self.mainwindow.categories:
+            self.mainwindow.categories += [category]
         print ("2categ: ", self.mainwindow.categories)
         model.setData(model.index(rowcount, 3), description)
         model.setData(model.index(rowcount, 4), amount)
@@ -170,6 +182,21 @@ class AddDialog(QMainWindow, Ui_addDialog):
             print model.lastError().databaseText()
 
         self.destroy()
+
+class CategoryManager(QMainWindow, Ui_CategoryManager):
+    def __init__(self, mainwindow):
+        super(CategoryManager, self).__init__()
+        self.mainwindow = mainwindow
+        self.setupUi(self)
+        self.setWindowTitle("Edit categories")
+        self.setWindowIcon(QIcon("icon.png"))
+        catmodel = QStandardItemModel(self.categoryView)
+        for category in self.mainwindow.categories:
+            item = QStandardItem(category)
+            catmodel.appendRow(item)
+
+        self.categoryView.setModel(catmodel)
+
 
 
 if __name__ == '__main__':
